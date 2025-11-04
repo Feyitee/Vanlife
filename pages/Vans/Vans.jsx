@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { getVans } from "../../api";
 
 export default function Vans() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -7,10 +8,15 @@ export default function Vans() {
   const typefilter = searchParams.get("type");
 
   const [vans, setVans] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
   React.useEffect(() => {
-    fetch("/api/vans")
-      .then((res) => res.json())
-      .then((data) => setVans(data.vans));
+    async function loadVans() {
+      setLoading(true);
+      const data = await getVans();
+      setVans(data);
+      setLoading(false);
+    }
+    loadVans();
   }, []);
 
   const displayFiltered = typefilter
@@ -19,7 +25,10 @@ export default function Vans() {
 
   const vanElements = displayFiltered.map((van) => (
     <div key={van.id} className="van-tile">
-      <Link to={van.id}>
+      <Link
+        to={van.id}
+        state={{ search: `?${searchParams.toString()}`, type: typefilter }}
+      >
         <img src={van.imageUrl} />
         <div className="van-info">
           <h3>{van.name}</h3>
@@ -33,6 +42,21 @@ export default function Vans() {
     </div>
   ));
 
+  function handleFilterChange(key, value) {
+    setSearchParams((prevParams) => {
+      if (value === null) {
+        prevParams.delete(key);
+      } else {
+        prevParams.set(key, value);
+      }
+      return prevParams;
+    });
+  }
+
+  if (loading) {
+    return <h1>Loading...</h1>;
+  }
+
   return (
     //The active class on Navlinks didn't work on query params because everything became active at once.
     <div className="van-list-container">
@@ -41,7 +65,7 @@ export default function Vans() {
         <button
           onClick={() => handleFilterChange("type", "simple")}
           className={`van-type simple ${
-            typeFilter === "simple" ? "selected" : ""
+            typefilter === "simple" ? "selected" : ""
           }`}
         >
           Simple
@@ -49,7 +73,7 @@ export default function Vans() {
         <button
           onClick={() => handleFilterChange("type", "luxury")}
           className={`van-type luxury ${
-            typeFilter === "luxury" ? "selected" : ""
+            typefilter === "luxury" ? "selected" : ""
           }`}
         >
           Luxury
@@ -57,13 +81,13 @@ export default function Vans() {
         <button
           onClick={() => handleFilterChange("type", "rugged")}
           className={`van-type rugged ${
-            typeFilter === "rugged" ? "selected" : ""
+            typefilter === "rugged" ? "selected" : ""
           }`}
         >
           Rugged
         </button>
 
-        {typeFilter ? (
+        {typefilter ? (
           <button
             onClick={() => handleFilterChange("type", null)}
             className="van-type clear-filters"
