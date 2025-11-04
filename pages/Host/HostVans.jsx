@@ -4,19 +4,14 @@ import { Link, useSearchParams } from "react-router-dom";
 export default function HostVans() {
   const [vans, setVans] = React.useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
-  const typefilter = searchParams.get("type");
-
-  const displayFiltered = typefilter
-    ? vans.filter((van) => van.type === typefilter)
-    : vans;
-
+  
   React.useEffect(() => {
     fetch("/api/host/vans")
       .then((res) => res.json())
       .then((data) => setVans(data.vans));
   }, []);
 
-  const hostVansEls = displayFiltered.map((van) => (
+  const hostVansEls = vans.map((van) => (
     <Link
       to={`/host/vans/${van.id}`}
       key={van.id}
